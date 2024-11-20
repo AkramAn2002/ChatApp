@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Index</title>
+    <link rel="stylesheet" href="/Css1.css" />
+</head>
+<body>
+<img src="/logochat.png">
+<form th:action="@{/index/login}" method="post" id="form">
+    <div class="globale1"><div class="globale"></div></div>
+    <div th:if="${banned != null}" class="banner">
+        <p class="h1">[[${banned}]]</p>
+    </div>
+    <table class="container">
+        <tr>
+            <td>
+                <label for="userName">Username :</label>
+            </td>
+            <td>
+                <input type="text" id="userName" name="userName">
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+
+        </tr>
+        <tr>
+            <td>
+                <label for="password">Password :</label>
+            </td>
+            <td>
+                <input type="password" id="password" name="password">
+            </td>
+        </tr>
+        <tr>
+            <td>
+            <div th:if="${error != null}">
+                <p style="color: red;">[[${error}]]</p>
+            </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div class="container3">
+                    <button type="submit" class="submit-button">Se connecter</button>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+</form>
+
+</body>
+</html>

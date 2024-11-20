@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Chat Interface</title>
+    <link rel="stylesheet" href="/Css2.css"/>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css">
+    <script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
+    <style>
+        #chatRoom .message-containers {
+            width: 300px;
+            padding-left: 170px;
+        }
+
+        #chatRoom p.user-message {
+            color: white;
+            background-color: #2f3136;
+            padding-left: 5px;
+            height: 50px;
+            width: 300px;
+            border-top-right-radius: 15px;
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+            margin-right: 100px;
+            border:1px solid white ;
+        }
+
+        #chatRoom .message-containers2 {
+            width: 300px;
+        }
+
+        #chatRoom p.other-message {
+            color: white;
+            background-color: black;
+            padding-left: 5px;
+            padding-top: 10px;
+            height: 50px;
+            width: 300px;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+            margin-right: 100px;
+            border:1px solid white ;
+        }
+
+
+    </style>
+</head>
+
+<body>
+
+<div th:if="${user != null}" id="list">
+   <div class="logOutContainer">
+       <a th:href="@{http://localhost:8085/logout(idUser=${user.idUser})}" class="logOut">
+        <span >Log-out</span>
+        <i class="fa-solid fa-right-from-bracket"></i>
+    </a>
+   </div>
+    <div class="positionOnlineUsers">
+        <div class="onlineUsers" id="onlineUsers">
+
+
+            </div>
+
+
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <h1>Welcome to the chat room <span th:text="${user.prenom}"></span></h1>
+        <div class="chat-room" id="chatRoom">
+
+        </div>
+        <form th:action="@{/message/save}" method="post" id="messageForm" class="message-form">
+            <div class="sendContainer">
+                <input type="text" name="messageContent" placeholder="Type your message..." id="ZoneText" required>
+                <input type="hidden" id="idUser" name="idUser" th:value="${user.idUser}">
+                <input type="submit" value="Send" id="submit">
+           </div>
+        </form>
+    </div>
+</div>
+
+<script>
+
+    $(document).ready(function () {
+        let messages = [];
+
+        function loadMessages(){
+            $.ajax({
+                type: 'GET',
+                url: '/get-all-messages',
+                success: function (response) {
+
+                    $('#chatRoom').html(response.map(item => {
+
+                        const idUser = parseInt($('#idUser').val())
+                        const messageSenderId = item.user.idUser
+
+                        const className = idUser === messageSenderId ? 'user-message' : 'other-message' ;
+                        if(className==="user-message")
+                        {
+
+                            return `
+                               <div class="message-containers">
+                                   <p class="${className}" >${item.user.prenom} : ${item.messageContent}
+                                   <p style="padding-bottom: 10px;">${item.timeSent}</p></p>
+                                </div><br>`;
+                        }
+                        else
+                        {
+                            return `
+                               <div class="message-containers2">
+                                   <p class="${className}" >${item.user.prenom} : ${item.messageContent} </p>
+                                    <p style="padding-bottom: 10px;">${item.timeSent}</p></p>
+                                </div><br>`;
+                        }
+
+                    }).join(''));
+                    if(messages.length !== response.length){
+                        scrollToBottom()
+                    }
+                    messages = response ;
+
+                },
+                error: function (error) {
+                    console.log('Erreur lors de l\'envoi du message : ' + error);
+                }
+            });
+        }
+        loadMessages()
+        setInterval( loadMessages,1000);
+
+        function OnlineUsers() {
+            let top=140;
+            $.ajax({
+                type: 'GET',
+                url: '/get-OnlineUsers',
+                success: function (response) {
+                    $('#onlineUsers').html(response.map(user => {
+                        if(user.status && user.status === "Online")
+                        {
+                            return `<div class="no">
+                                        <div style="color:white;" class="userOn">${user.prenom}
+                                            <span class="online_icon" style="background-color: green;" ></span>
+                                            <div style="display: none" class="iduser">${user.idUser}</div>
+                                        </div>
+                                         </div>
+                                    <br>
+`;
+                        }
+                        else
+                        {
+                            return `<div class="no">
+                                    <div style="color:white;" class="userOn">${user.prenom}
+                                        <span class="online_icon" style="background-color: red;" ></span>
+                                        <div style="display: none" class="iduser">${user.idUser}</div>
+                                    </div>
+
+
+                                    </div>
+<br>`;
+
+                        }
+                    }).join(''));
+
+                },
+                error: function (error) {
+                    console.log('Error fetching online users: ', error);
+                }
+            });
+
+
+
+        }
+
+        OnlineUsers()
+        setInterval( OnlineUsers,500);
+
+
+        function scrollToBottom() {
+            $('#chatRoom').scrollTop($('#chatRoom')[0].scrollHeight);
+        }
+
+
+        $('#messageForm').submit(function (event) {
+            event.preventDefault();
+            var messageContent = $('input[name="messageContent"]').val();
+
+            var idUser = $('input[name="idUser"]').val();
+
+            var nomUser = $('#NomUser').text();
+
+            $.ajax({
+                type: 'POST',
+                url: '/message/save',
+                data: {
+                    messageContent: messageContent,
+                    idUser: idUser
+                },
+                success: function (response) {
+
+                    $('input[name="messageContent"]').val('');
+                },
+                error: function (error) {
+                    console.log('Erreur lors de l\'envoi du message : ' + error);
+                }
+            });
+            scrollToBottom();
+        });
+
+    });
+
+
+</script>
+
+
+
+
+</body>
+
+</html>
